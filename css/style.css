@@ -11,9 +11,9 @@
   --last-soft: rgba(230, 140, 40, 0.14);
   --last: #d9822b;
   --danger: #d0353f;
-  --flash: rgba(255, 196, 0, 0.55);
+  --flash: rgba(255, 140, 0, 0.7);
   --tape-well: #dde2ea;
-  --tape-bg: #fffcf2;
+  --tape-bg: #f2ecdb;
   --tape-line: #d6cfbd;
   --tape-edge: #8f8570;
   --tape-ink: #1d2330;
@@ -37,11 +37,11 @@
     --last-soft: rgba(240, 160, 70, 0.16);
     --last: #f0a046;
     --danger: #f0646d;
-    --flash: rgba(255, 200, 40, 0.4);
+    --flash: rgba(255, 140, 0, 0.75);
     --tape-well: #0e1116;
-    --tape-bg: #efe9da;
-    --tape-line: #c9c0aa;
-    --tape-edge: #a3987d;
+    --tape-bg: #cdc5af;
+    --tape-line: #ada38a;
+    --tape-edge: #857b62;
     --tape-ink: #1b1f27;
     --tape-shadow: rgba(0, 0, 0, 0.6);
     --shadow: none;
@@ -62,11 +62,11 @@
   --last-soft: rgba(240, 160, 70, 0.16);
   --last: #f0a046;
   --danger: #f0646d;
-  --flash: rgba(255, 200, 40, 0.4);
+  --flash: rgba(255, 140, 0, 0.75);
   --tape-well: #0e1116;
-  --tape-bg: #efe9da;
-  --tape-line: #c9c0aa;
-  --tape-edge: #a3987d;
+  --tape-bg: #cdc5af;
+  --tape-line: #ada38a;
+  --tape-edge: #857b62;
   --tape-ink: #1b1f27;
   --tape-shadow: rgba(0, 0, 0, 0.6);
   --shadow: none;
@@ -276,8 +276,13 @@ input[type='number'] {
 }
 
 .speed input {
-  width: 120px;
+  width: 110px;
   accent-color: var(--accent);
+}
+
+.speed-btn {
+  padding: 5px 10px;
+  font-size: 0.88rem;
 }
 
 .speed-value {
@@ -296,6 +301,13 @@ input[type='number'] {
   }
   .speed input {
     flex: 1;
+    min-width: 0;
+  }
+  .controls .speed button {
+    flex: none;
+  }
+  .speed-value {
+    min-width: 4.5em;
   }
 }
 

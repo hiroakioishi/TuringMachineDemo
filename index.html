@@ -6,8 +6,8 @@
     <title>チューリングマシン・デモ</title>
     <meta name="description" content="チューリングマシンのテープ・ヘッド・状態・遷移表のしくみを、1 ステップずつ動かして学べるデモです。遷移表は自由に編集できます。" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='12' width='28' height='12' rx='2' fill='%23fff' stroke='%23333' stroke-width='2'/%3E%3Cpath d='M16 10l-5-7h10z' fill='%232a6fdb'/%3E%3C/svg%3E" />
-    <link rel="stylesheet" href="css/style.css?v=4" />
-    <script type="module" src="js/main.js?v=4"></script>
+    <link rel="stylesheet" href="css/style.css?v=5" />
+    <script type="module" src="js/main.js?v=5"></script>
   </head>
   <body>
     <header class="site-header">
@@ -35,11 +35,13 @@
           <button id="btn-back" type="button" title="1 ステップ戻る（←）">◀ 戻る</button>
           <button id="btn-step" type="button" title="1 ステップ進む（→）">進む ▶</button>
           <button id="btn-run" type="button" class="primary" title="再生／一時停止（Space）">▶ 再生</button>
-          <label class="speed">
+          <div class="speed" role="group" aria-label="速さ">
             <span>速さ</span>
-            <input id="speed" type="range" min="0" max="8" step="1" value="2" />
-            <span id="speed-label" class="speed-value"></span>
-          </label>
+            <button id="speed-down" type="button" class="speed-btn" title="遅くする（−）">🐢 遅く</button>
+            <input id="speed" type="range" min="0" max="8" step="1" value="2" aria-label="速さ" />
+            <button id="speed-up" type="button" class="speed-btn" title="速くする（＋）">速く 🐇</button>
+            <span id="speed-label" class="speed-value" aria-live="polite"></span>
+          </div>
         </div>
 
         <div class="stats">
@@ -171,7 +173,7 @@
               <li>遷移表の行は ⠿ をドラッグして並べ替えられます（⠿ を選んで ↑↓ キーでも移動できます）。</li>
               <li>状態遷移図の状態はドラッグで動かせます。「配置を戻す」で元に戻ります。</li>
               <li>「共有リンクをコピー」で、今のマシンを URL として保存・共有できます。</li>
-              <li>キーボード：<kbd>Space</kbd> 再生／一時停止、<kbd>→</kbd> 進む、<kbd>←</kbd> 戻る、<kbd>R</kbd> リセット</li>
+              <li>キーボード：<kbd>Space</kbd> 再生／一時停止、<kbd>→</kbd> 進む、<kbd>←</kbd> 戻る、<kbd>R</kbd> リセット、<kbd>−</kbd> 遅く、<kbd>＋</kbd> 速く</li>
             </ul>
           </div>
         </details>

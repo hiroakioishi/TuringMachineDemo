@@ -1,7 +1,7 @@
-import { TuringMachine, compile, parseList } from './machine.js?v=4';
-import { PRESETS, clonePreset, cloneLayout, rowsToRules, rulesToRows } from './presets.js?v=4';
-import { TapeRenderer, SpacetimeRenderer, makeStateColors, makeSymbolColors, readTheme } from './render.js?v=4';
-import { StateDiagram } from './diagram.js?v=4';
+import { TuringMachine, compile, parseList } from './machine.js?v=5';
+import { PRESETS, clonePreset, cloneLayout, rowsToRules, rulesToRows } from './presets.js?v=5';
+import { TapeRenderer, SpacetimeRenderer, makeStateColors, makeSymbolColors, readTheme } from './render.js?v=5';
+import { StateDiagram } from './diagram.js?v=5';
 
 const $ = (id) => document.getElementById(id);
 const SPEEDS = [0.5, 1, 2, 4, 8, 16, 32, 64, 240];
@@ -707,10 +707,21 @@ $('diagram-reset').addEventListener('click', () => {
 
 const speedInput = $('speed');
 function applySpeed() {
-  speed = SPEEDS[Number(speedInput.value)];
+  const i = Number(speedInput.value);
+  speed = SPEEDS[i];
   $('speed-label').textContent = speed >= 240 ? '最速' : `${speed} 回/秒`;
+  $('speed-down').disabled = i <= 0;
+  $('speed-up').disabled = i >= SPEEDS.length - 1;
+}
+/** 速さを 1 段階変える（delta = -1 で遅く、+1 で速く） */
+function changeSpeed(delta) {
+  const i = Math.max(0, Math.min(SPEEDS.length - 1, Number(speedInput.value) + delta));
+  speedInput.value = i;
+  applySpeed();
 }
 speedInput.addEventListener('input', applySpeed);
+$('speed-down').addEventListener('click', () => changeSpeed(-1));
+$('speed-up').addEventListener('click', () => changeSpeed(1));
 applySpeed();
 
 document.addEventListener('keydown', (e) => {
@@ -725,6 +736,9 @@ document.addEventListener('keydown', (e) => {
     ArrowLeft: () => (setRunning(false), doStepBack()),
     r: resetMachine,
     R: resetMachine,
+    '-': () => changeSpeed(-1),
+    '+': () => changeSpeed(1),
+    '=': () => changeSpeed(1), // Shift なしの「+」キー
   };
   const act = actions[e.key];
   if (act) {

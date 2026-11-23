@@ -139,7 +139,7 @@ export class TapeRenderer {
     for (let p = first; p <= last; p++) {
       const x = toX(p) - s / 2;
       if (p === tm.head) {
-        ctx.fillStyle = colorOf(tm.state, 0.16);
+        ctx.fillStyle = colorOf(tm.state, 0.32); // 紙の上でも分かるよう濃いめに
         ctx.fillRect(x, tapeY, s, s);
       }
       if (flash && flash.pos === p && flash.alpha > 0) {
@@ -183,8 +183,8 @@ export class TapeRenderer {
     const hx = toX(headX);
     const col = colorOf(tm.state);
     ctx.strokeStyle = col;
-    ctx.lineWidth = 3;
-    roundRect(ctx, hx - s / 2 - 1.5, tapeY - 1.5, s + 3, s + 3, 4);
+    ctx.lineWidth = 4;
+    roundRect(ctx, hx - s / 2 - 2, tapeY - 2, s + 4, s + 4, 5);
     ctx.stroke();
 
     ctx.fillStyle = col;
