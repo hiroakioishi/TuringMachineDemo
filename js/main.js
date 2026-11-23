@@ -1,7 +1,7 @@
-import { TuringMachine, compile, parseList } from './machine.js?v=2';
-import { PRESETS, clonePreset, cloneLayout, rowsToRules, rulesToRows } from './presets.js?v=2';
-import { TapeRenderer, SpacetimeRenderer, makeStateColors, makeSymbolColors, readTheme } from './render.js?v=2';
-import { StateDiagram } from './diagram.js?v=2';
+import { TuringMachine, compile, parseList } from './machine.js?v=3';
+import { PRESETS, clonePreset, cloneLayout, rowsToRules, rulesToRows } from './presets.js?v=3';
+import { TapeRenderer, SpacetimeRenderer, makeStateColors, makeSymbolColors, readTheme } from './render.js?v=3';
+import { StateDiagram } from './diagram.js?v=3';
 
 const $ = (id) => document.getElementById(id);
 const SPEEDS = [0.5, 1, 2, 4, 8, 16, 32, 64, 240];
@@ -205,7 +205,9 @@ function frame(now) {
     if (a > 0) f = { pos: flash.pos, alpha: a * 0.8 };
     else flash = null;
   }
-  tapeR.draw({ tm, headX: headX(now), colorOf, flash: f, theme, now });
+  const tapeSpot = spot?.canvas ? { kind: spot.canvas, phase: (now - spot.t0) / 1000 } : null;
+  tapeR.draw({ tm, headX: headX(now), colorOf, flash: f, theme, now, spot: tapeSpot });
+  if (spot) placeSpotLabels();
 
   if (stDirty) {
     stR.draw({ rows, min: range.min, max: range.max, colorOf, symColor, theme });
@@ -615,6 +617,78 @@ $('share').addEventListener('click', async () => {
   }
 });
 
+// ---------- 解説カード → 部品の場所を示す（スポットライト） ----------
+const SPOTS = {
+  tape: {
+    canvas: 'tape',
+    targets: [['.tape-wrap', 'これがテープ：記号を書いたマス目が左右に続いています']],
+  },
+  head: {
+    canvas: 'head',
+    targets: [['.tape-wrap', 'これがヘッド：▼ の付いた枠のマスを読み書きします']],
+  },
+  state: {
+    canvas: 'state',
+    targets: [
+      ['.states', 'これが状態：今の状態が塗りつぶされています（ヘッドの上にも表示）'],
+      ['.tape-wrap', null],
+      ['.diagram-wrap', '状態遷移図でも、今の状態が塗りつぶされます'],
+    ],
+  },
+  rules: {
+    targets: [['.table-wrap', 'これが遷移表：マシンのプログラムです（青い行が次に使う規則）']],
+  },
+};
+const SPOT_MS = 6000;
+let spot = null;
+
+function showSpot(kind) {
+  clearSpot();
+  const conf = SPOTS[kind];
+  const items = conf.targets.map(([sel, text]) => {
+    const target = document.querySelector(sel);
+    target.classList.add('spot');
+    const label = text ? el('div', { className: 'spot-label' }, text) : null;
+    if (label) $('spot-labels').append(label);
+    return { target, label };
+  });
+  const overlay = $('spot-overlay');
+  overlay.hidden = false;
+  requestAnimationFrame(() => overlay.classList.add('show'));
+  items[0].target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  spot = { kind, canvas: conf.canvas, items, t0: performance.now(), timer: setTimeout(clearSpot, SPOT_MS) };
+  placeSpotLabels();
+}
+
+function clearSpot() {
+  if (!spot) return;
+  clearTimeout(spot.timer);
+  spot.items.forEach(({ target }) => target.classList.remove('spot'));
+  $('spot-labels').replaceChildren();
+  const overlay = $('spot-overlay');
+  overlay.classList.remove('show');
+  overlay.hidden = true;
+  spot = null;
+}
+
+/** ラベルを対象の左上（上に余白がなければ内側）に置く。スクロール中も毎フレーム追従する */
+function placeSpotLabels() {
+  for (const { target, label } of spot.items) {
+    if (!label) continue;
+    const r = target.getBoundingClientRect();
+    const lh = label.offsetHeight;
+    const top = r.top - lh - 16 > 4 ? r.top - lh - 16 : r.top + 8;
+    const left = Math.max(8, Math.min(window.innerWidth - label.offsetWidth - 8, r.left + 4));
+    label.style.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`;
+  }
+}
+
+document.querySelector('.parts').addEventListener('click', (e) => {
+  const card = e.target.closest('[data-spot]');
+  if (card) showSpot(card.dataset.spot);
+});
+$('spot-overlay').addEventListener('click', clearSpot);
+
 // ---------- 操作 ----------
 $('btn-run').addEventListener('click', () => setRunning(!running));
 $('btn-step').addEventListener('click', () => {
@@ -640,6 +714,10 @@ speedInput.addEventListener('input', applySpeed);
 applySpeed();
 
 document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && spot) {
+    clearSpot();
+    return;
+  }
   if (e.target.closest('input, textarea, select') || e.ctrlKey || e.metaKey || e.altKey) return;
   const actions = {
     ' ': () => setRunning(!running),

@@ -37,6 +37,7 @@ export function readTheme() {
     muted: g('--muted'),
     line: g('--line'),
     flash: g('--flash'),
+    accent: g('--accent'),
   };
 }
 
@@ -87,8 +88,9 @@ export class TapeRenderer {
   /**
    * tm: TuringMachine, headX: 表示上のヘッド位置（補間済み）
    * flash: { pos, alpha } | null
+   * spot: { kind: 'tape' | 'head' | 'state', phase } | null — 解説カードから強調するとき
    */
-  draw({ tm, headX, colorOf, flash, theme, now }) {
+  draw({ tm, headX, colorOf, flash, theme, now, spot }) {
     const { ctx, w, h } = fitCanvas(this.canvas);
     const s = this.cellSize(w);
     const tapeY = Math.round(h - s - 26);
@@ -169,6 +171,24 @@ export class TapeRenderer {
     ctx.fill();
     ctx.fillStyle = '#fff';
     ctx.fillText(label, px + pw / 2, py + ph / 2 + 1);
+
+    // 解説カードから強調された部品を、脈打つ枠で示す
+    if (spot) {
+      const pulse = (Math.sin(spot.phase * Math.PI * 2 * 0.8) + 1) / 2; // 0〜1
+      const grow = 3 + pulse * 6;
+      ctx.strokeStyle = theme.accent;
+      ctx.lineWidth = 3;
+      ctx.setLineDash([]);
+      if (spot.kind === 'head') {
+        roundRect(ctx, hx - s / 2 - 4 - grow, tapeY - 20 - grow, s + 8 + grow * 2, s + 24 + grow * 2, 8);
+        ctx.stroke();
+      } else if (spot.kind === 'tape') {
+        ctx.strokeRect(4 - grow / 3, tapeY - grow, w - 8 + (grow * 2) / 3, s + grow * 2);
+      } else if (spot.kind === 'state') {
+        roundRect(ctx, px - grow, py - grow, pw + grow * 2, ph + grow * 2, ph / 2 + grow);
+        ctx.stroke();
+      }
+    }
 
     // 左右の端をぼかして「テープは続いている」ことを示す
     const fade = Math.min(60, w * 0.12);

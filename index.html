@@ -6,8 +6,8 @@
     <title>チューリングマシン・デモ</title>
     <meta name="description" content="チューリングマシンのテープ・ヘッド・状態・遷移表のしくみを、1 ステップずつ動かして学べるデモです。遷移表は自由に編集できます。" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='12' width='28' height='12' rx='2' fill='%23fff' stroke='%23333' stroke-width='2'/%3E%3Cpath d='M16 10l-5-7h10z' fill='%232a6fdb'/%3E%3C/svg%3E" />
-    <link rel="stylesheet" href="css/style.css?v=2" />
-    <script type="module" src="js/main.js?v=2"></script>
+    <link rel="stylesheet" href="css/style.css?v=3" />
+    <script type="module" src="js/main.js?v=3"></script>
   </head>
   <body>
     <header class="site-header">
@@ -135,12 +135,29 @@
               チューリングマシンは、1936 年にアラン・チューリングが考えた「計算」の模型です。とても単純な部品だけでできていますが、
               いまのコンピューターで計算できることは、原理的にはすべてこのマシンでも計算できると考えられています。
             </p>
-            <dl class="parts">
-              <div><dt>テープ</dt><dd>左右にどこまでも続くマス目の列。各マスに記号が 1 つ書かれています（何もないマスは「空白記号」）。</dd></div>
-              <div><dt>ヘッド</dt><dd>テープの 1 マスを指していて、そのマスの記号を読んだり書き換えたりします。1 回に 1 マスだけ左右に動けます。</dd></div>
-              <div><dt>状態</dt><dd>マシンが今「何をしている途中か」を表す名前です。マシンの記憶はこの状態とテープだけです。</dd></div>
-              <div><dt>遷移表</dt><dd>「この状態でこの記号を読んだら、何を書き、どちらへ動き、次にどの状態になるか」をまとめた規則の表です。これがプログラムにあたります。</dd></div>
-            </dl>
+            <p class="hint">カードをクリックすると、その部品が画面のどこにあるかを示します。</p>
+            <div class="parts">
+              <button type="button" class="part" data-spot="tape">
+                <span class="part-name">テープ</span>
+                <span class="part-desc">左右にどこまでも続くマス目の列。各マスに記号が 1 つ書かれています（何もないマスは「空白記号」）。</span>
+                <span class="part-cta">画面で見る →</span>
+              </button>
+              <button type="button" class="part" data-spot="head">
+                <span class="part-name">ヘッド</span>
+                <span class="part-desc">テープの 1 マスを指していて、そのマスの記号を読んだり書き換えたりします。1 回に 1 マスだけ左右に動けます。</span>
+                <span class="part-cta">画面で見る →</span>
+              </button>
+              <button type="button" class="part" data-spot="state">
+                <span class="part-name">状態</span>
+                <span class="part-desc">マシンが今「何をしている途中か」を表す名前です。マシンの記憶はこの状態とテープだけです。</span>
+                <span class="part-cta">画面で見る →</span>
+              </button>
+              <button type="button" class="part" data-spot="rules">
+                <span class="part-name">遷移表</span>
+                <span class="part-desc">「この状態でこの記号を読んだら、何を書き、どちらへ動き、次にどの状態になるか」をまとめた規則の表です。これがプログラムにあたります。</span>
+                <span class="part-cta">画面で見る →</span>
+              </button>
+            </div>
             <p>マシンは「読む → 遷移表を見る → 書く → 動く → 状態を変える」を繰り返し、停止状態になるか、使える規則がなくなると止まります。</p>
           </div>
         </details>
@@ -161,6 +178,8 @@
       </section>
     </main>
 
+    <div id="spot-overlay" class="spot-overlay" hidden></div>
+    <div id="spot-labels" aria-live="polite"></div>
     <div id="toast" class="toast" role="status"></div>
   </body>
 </html>

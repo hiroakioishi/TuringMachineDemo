@@ -783,24 +783,97 @@ body.row-dragging * {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 10px;
-  margin: 12px 0;
+  margin: 8px 0 12px;
 }
 
-.parts div {
+button.part {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  text-align: left;
+  white-space: normal;
   background: var(--cell);
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 10px 12px;
 }
 
-.parts dt {
+button.part:hover {
+  background: var(--accent-soft);
+}
+
+.part-name {
   font-weight: 700;
 }
 
-.parts dd {
-  margin: 2px 0 0;
+.part-desc {
   font-size: 0.9rem;
   color: var(--muted);
+}
+
+.part-cta {
+  margin-top: auto;
+  padding-top: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* ---------- スポットライト（部品の場所を示す） ---------- */
+.spot-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(10, 14, 22, 0.55);
+  opacity: 0;
+  transition: opacity 0.25s;
+  cursor: pointer;
+}
+
+.spot-overlay.show {
+  opacity: 1;
+}
+
+.spot {
+  position: relative;
+  z-index: 41;
+  background: var(--surface);
+  border-radius: 10px;
+  animation: spot-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes spot-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 6px var(--surface), 0 0 0 9px var(--accent);
+  }
+  50% {
+    box-shadow: 0 0 0 6px var(--surface), 0 0 0 14px var(--accent);
+  }
+}
+
+.spot-label {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 42;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 4px 12px;
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+  max-width: calc(100vw - 32px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spot {
+    animation: none;
+    box-shadow: 0 0 0 6px var(--surface), 0 0 0 10px var(--accent);
+  }
 }
 
 kbd {
