@@ -88,3 +88,43 @@ test('入力エラーを検出する', () => {
   assert.deepEqual(fields, ['-:blank', '-:start', '1:read', '2:state', '2:read', '2:move', '2:next']);
   assert.equal(machine.rules.length, 1);
 });
+
+test('止まらない 2 進カウンター', () => {
+  const { machine } = compile(clonePreset('counter'));
+  const tm = new TuringMachine(machine);
+  const seen = [];
+  while (seen.length < 40) {
+    tm.step();
+    if (tm.state === '繰上げ' && tm.lastRule?.state === '右端へ') seen.push(parseInt(tm.tapeString(), 2));
+  }
+  assert.deepEqual(seen, Array.from({ length: 40 }, (_, i) => i));
+  assert.equal(tm.halted, false);
+});
+
+test('aⁿbⁿ の判定', () => {
+  const cases = { '': '受理', ab: '受理', aabb: '受理', aaabbb: '受理', a: '拒否', b: '拒否', ba: '拒否', aab: '拒否', abb: '拒否', abab: '拒否', aabbb: '拒否', aaabb: '拒否' };
+  for (const [tape, expected] of Object.entries(cases)) {
+    assert.equal(run(withTape('anbn', tape)).state, expected, tape);
+  }
+});
+
+test('コラッツ予想（3n+1）', () => {
+  for (let n = 1; n <= 60; n++) {
+    const { machine } = compile(withTape('collatz', n.toString(2)));
+    const tm = new TuringMachine(machine);
+    const values = [];
+    while (!tm.halted && tm.steps < 200000) {
+      tm.step();
+      if (tm.state === '偶奇判定' && tm.lastRule?.state === '右端へ') values.push(parseInt(tm.tapeString(), 2));
+    }
+    // 「右端へ」から「偶奇判定」に入るのは、最初と 3n+1 を計算した直後
+    const expected = [n];
+    for (let k = n; k !== 1; ) {
+      if (k % 2 === 0) k /= 2;
+      else expected.push((k = 3 * k + 1));
+    }
+    assert.equal(tm.state, '停止', String(n));
+    assert.equal(tm.tapeString(), '1', String(n));
+    assert.deepEqual(values, expected, String(n));
+  }
+});
