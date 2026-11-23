@@ -1,7 +1,7 @@
 // Canvas への描画（テープとヘッド、時空間図）
 
-const STATE_HUES = [212, 150, 282, 54, 0, 100, 250]; // ハイライト専用のピンク・シアンと、オレンジ系は使わない
-const SYMBOL_HUES = [150, 282, 54, 0, 250];
+const STATE_HUES = [212, 24, 150, 282, 46, 338, 186, 100];
+const SYMBOL_HUES = [24, 150, 282, 46, 338, 186];
 
 /** 状態名 → 色 の関数を作る。停止状態はグレー */
 export function makeStateColors(states, haltStates) {
