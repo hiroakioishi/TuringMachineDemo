@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>チューリングマシン・デモ</title>
+    <meta name="description" content="チューリングマシンのテープ・ヘッド・状態・遷移表のしくみを、1 ステップずつ動かして学べるデモです。遷移表は自由に編集できます。" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='12' width='28' height='12' rx='2' fill='%23fff' stroke='%23333' stroke-width='2'/%3E%3Cpath d='M16 10l-5-7h10z' fill='%232a6fdb'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="css/style.css" />
+    <script type="module" src="js/main.js"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <h1>チューリングマシン・デモ</h1>
+      <p class="lead">テープ・ヘッド・状態・遷移表。計算機のいちばん基本のしくみを、1 ステップずつ動かして確かめましょう。</p>
+    </header>
+
+    <main class="layout">
+      <section class="panel machine-panel" aria-label="マシン">
+        <div class="preset-bar">
+          <label class="preset-label">
+            <span>例題</span>
+            <select id="preset"></select>
+          </label>
+          <button id="share" type="button" class="ghost">共有リンクをコピー</button>
+        </div>
+        <p id="preset-desc" class="preset-desc"></p>
+
+        <div class="tape-wrap">
+          <canvas id="tape" aria-label="テープとヘッド"></canvas>
+        </div>
+
+        <div class="controls">
+          <button id="btn-reset" type="button" title="リセット（R）">⟲ リセット</button>
+          <button id="btn-back" type="button" title="1 ステップ戻る（←）">◀ 戻る</button>
+          <button id="btn-step" type="button" title="1 ステップ進む（→）">進む ▶</button>
+          <button id="btn-run" type="button" class="primary" title="再生／一時停止（Space）">▶ 再生</button>
+          <label class="speed">
+            <span>速さ</span>
+            <input id="speed" type="range" min="0" max="8" step="1" value="2" />
+            <span id="speed-label" class="speed-value"></span>
+          </label>
+        </div>
+
+        <div class="stats">
+          <div class="stat"><span class="stat-label">ステップ</span><span id="stat-steps" class="stat-value">0</span></div>
+          <div class="stat"><span class="stat-label">ヘッド位置</span><span id="stat-head" class="stat-value">0</span></div>
+          <div class="stat"><span class="stat-label">空白以外の記号</span><span id="stat-count" class="stat-value">0</span></div>
+        </div>
+
+        <div class="states">
+          <span class="stat-label">状態</span>
+          <div id="state-chips" class="chips"></div>
+        </div>
+
+        <div id="explain" class="explain" aria-live="polite"></div>
+
+        <h2>時空間図</h2>
+        <p class="hint">1 行が 1 ステップぶんのテープです。上から下へ時間が進み、枠がヘッドの位置（色は状態）を表します。</p>
+        <div class="st-wrap">
+          <canvas id="spacetime" aria-label="時空間図"></canvas>
+        </div>
+      </section>
+
+      <section class="panel editor-panel" aria-label="マシンの設定">
+        <h2>マシンの設定</h2>
+        <p class="hint">設定を変えると、マシンは最初の状態に戻ります。</p>
+        <div class="settings">
+          <label class="field wide">
+            <span>初期テープ</span>
+            <input id="set-tape" type="text" spellcheck="false" autocomplete="off" />
+          </label>
+          <label class="field">
+            <span>ヘッドの開始位置</span>
+            <input id="set-head" type="number" step="1" />
+          </label>
+          <label class="field">
+            <span>空白記号</span>
+            <input id="set-blank" type="text" spellcheck="false" autocomplete="off" />
+          </label>
+          <label class="field">
+            <span>開始状態</span>
+            <input id="set-start" type="text" spellcheck="false" autocomplete="off" />
+          </label>
+          <label class="field">
+            <span>停止状態（カンマ区切り）</span>
+            <input id="set-halt" type="text" spellcheck="false" autocomplete="off" />
+          </label>
+        </div>
+
+        <h2>遷移表</h2>
+        <p class="hint">「現在の状態」で「読んだ記号」を見たら、「書く記号」を書き、「移動」して「次の状態」になります。編集はすぐに反映されます。</p>
+        <div class="legend">
+          <span><i class="sw sw-next"></i>次に使う規則</span>
+          <span><i class="sw sw-last"></i>直前に使った規則</span>
+        </div>
+        <div class="table-wrap">
+          <table class="rules">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>現在の状態</th>
+                <th>読んだ記号</th>
+                <th>書く記号</th>
+                <th>移動</th>
+                <th>次の状態</th>
+                <th><span class="sr-only">削除</span></th>
+              </tr>
+            </thead>
+            <tbody id="rules-body"></tbody>
+          </table>
+        </div>
+        <button id="add-rule" type="button" class="ghost add-rule">＋ 行を追加</button>
+        <ul id="errors" class="errors" hidden></ul>
+      </section>
+
+      <section class="panel about" aria-label="解説">
+        <details open>
+          <summary>チューリングマシンとは？</summary>
+          <div class="about-body">
+            <p>
+              チューリングマシンは、1936 年にアラン・チューリングが考えた「計算」の模型です。とても単純な部品だけでできていますが、
+              いまのコンピューターで計算できることは、原理的にはすべてこのマシンでも計算できると考えられています。
+            </p>
+            <dl class="parts">
+              <div><dt>テープ</dt><dd>左右にどこまでも続くマス目の列。各マスに記号が 1 つ書かれています（何もないマスは「空白記号」）。</dd></div>
+              <div><dt>ヘッド</dt><dd>テープの 1 マスを指していて、そのマスの記号を読んだり書き換えたりします。1 回に 1 マスだけ左右に動けます。</dd></div>
+              <div><dt>状態</dt><dd>マシンが今「何をしている途中か」を表す名前です。マシンの記憶はこの状態とテープだけです。</dd></div>
+              <div><dt>遷移表</dt><dd>「この状態でこの記号を読んだら、何を書き、どちらへ動き、次にどの状態になるか」をまとめた規則の表です。これがプログラムにあたります。</dd></div>
+            </dl>
+            <p>マシンは「読む → 遷移表を見る → 書く → 動く → 状態を変える」を繰り返し、停止状態になるか、使える規則がなくなると止まります。</p>
+          </div>
+        </details>
+        <details>
+          <summary>使い方とキーボード操作</summary>
+          <div class="about-body">
+            <ul>
+              <li>まずは「進む ▶」を押して、1 ステップごとに説明文と遷移表のハイライトを確かめましょう。</li>
+              <li>「◀ 戻る」で 1 ステップずつ巻き戻せます。</li>
+              <li>遷移表の記号や状態を書き換えると、すぐに動きが変わります。おかしな入力は赤枠で知らせます。</li>
+              <li>「共有リンクをコピー」で、今のマシンを URL として保存・共有できます。</li>
+              <li>キーボード：<kbd>Space</kbd> 再生／一時停止、<kbd>→</kbd> 進む、<kbd>←</kbd> 戻る、<kbd>R</kbd> リセット</li>
+            </ul>
+          </div>
+        </details>
+      </section>
+    </main>
+
+    <div id="toast" class="toast" role="status"></div>
+  </body>
+</html>
