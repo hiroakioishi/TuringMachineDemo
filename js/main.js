@@ -1,6 +1,7 @@
-import { TuringMachine, compile, parseList } from './machine.js';
-import { PRESETS, clonePreset, rowsToRules, rulesToRows } from './presets.js';
-import { TapeRenderer, SpacetimeRenderer, makeStateColors, makeSymbolColors, readTheme } from './render.js';
+import { TuringMachine, compile, parseList } from './machine.js?v=2';
+import { PRESETS, clonePreset, cloneLayout, rowsToRules, rulesToRows } from './presets.js?v=2';
+import { TapeRenderer, SpacetimeRenderer, makeStateColors, makeSymbolColors, readTheme } from './render.js?v=2';
+import { StateDiagram } from './diagram.js?v=2';
 
 const $ = (id) => document.getElementById(id);
 const SPEEDS = [0.5, 1, 2, 4, 8, 16, 32, 64, 240];
@@ -26,6 +27,7 @@ let stDirty = true;
 
 const tapeR = new TapeRenderer($('tape'));
 const stR = new SpacetimeRenderer($('spacetime'));
+const diagram = new StateDiagram($('diagram'));
 
 // ---------- 小さな DOM ヘルパー ----------
 function el(tag, props = {}, ...children) {
@@ -52,8 +54,12 @@ function toast(msg) {
 }
 
 // ---------- 定義の読み込み・検証 ----------
+let baseLayout = {}; // 「配置を戻す」で戻す先
+
 function loadDef(d) {
   def = d;
+  def.layout ??= {};
+  baseLayout = cloneLayout(def.layout);
   $('set-tape').value = def.tape;
   $('set-head').value = def.head;
   $('set-start').value = def.start;
@@ -222,35 +228,47 @@ function updateUI() {
 
   renderChips();
   renderExplain();
-  highlightRows();
+  const nextRow = tm.halted ? -1 : (tm.findRule()?.row ?? -1);
+  const lastRow = tm.lastRule?.row ?? -1;
+  highlightRows(nextRow, lastRow);
+  const m = compiled.machine;
+  diagram.update({
+    states: allStates(),
+    rules: m.rules,
+    start: m.start,
+    halt: m.halt,
+    current: tm.state,
+    nextRow,
+    lastRow,
+    colorOf,
+    layout: def.layout,
+  });
+}
+
+/** 開始状態 → 遷移表に出てくる順 → 停止状態 の順に、重複なしで状態を並べる */
+function allStates() {
+  const m = compiled.machine;
+  const list = [m.start];
+  def.rules.forEach((r) => list.push(String(r.state).trim(), String(r.next).trim()));
+  list.push(...m.halt);
+  if (tm) list.push(tm.state);
+  return [...new Set(list.filter(Boolean))];
 }
 
 function renderChips() {
   const m = compiled.machine;
-  const seen = new Set();
-  const chips = [];
-  const add = (s) => {
-    if (!s || seen.has(s)) return;
-    seen.add(s);
+  const chips = allStates().map((s) => {
     const isHalt = m.halt.includes(s);
     const cls = ['chip'];
     if (s === tm.state) cls.push('is-current');
     if (isHalt) cls.push('is-halt');
     if (s === m.start) cls.push('is-start');
-    chips.push(
-      el(
-        'span',
-        { className: cls.join(' '), style: `--c:${colorOf(s)}`, title: isHalt ? '停止状態' : s === m.start ? '開始状態' : '' },
-        s,
-      ),
+    return el(
+      'span',
+      { className: cls.join(' '), style: `--c:${colorOf(s)}`, title: isHalt ? '停止状態' : s === m.start ? '開始状態' : '' },
+      s,
     );
-  };
-  add(m.start);
-  def.rules.forEach((r) => {
-    add(String(r.state).trim());
-    add(String(r.next).trim());
   });
-  m.halt.forEach(add);
   $('state-chips').replaceChildren(...chips);
 }
 
@@ -261,6 +279,8 @@ function renderExplain() {
 
   if (last) {
     const r = last.rule;
+    // 遷移表を編集した後は行番号がずれている可能性があるので番号を出さない
+    const ruleRef = tm.lastRule ? ['規則 ', el('b', {}, `#${r.row + 1}`), ' に従って '] : ['規則に従って '];
     lines.push(
       el(
         'p',
@@ -270,9 +290,8 @@ function renderExplain() {
         stateTag(last.state),
         ' でヘッドの下の ',
         symTag(last.read),
-        ' を読みました。規則 ',
-        el('b', {}, `#${r.row + 1}`),
-        ' に従って ',
+        ' を読みました。',
+        ...ruleRef,
         symTag(r.write),
         ' を書き、',
         moveText(r.move),
@@ -333,9 +352,7 @@ function renderExplain() {
   box.replaceChildren(...lines);
 }
 
-function highlightRows() {
-  const nextRow = tm.halted ? -1 : (tm.findRule()?.row ?? -1);
-  const lastRow = tm.lastRule?.row ?? -1;
+function highlightRows(nextRow, lastRow) {
   document.querySelectorAll('#rules-body tr').forEach((tr) => {
     const i = Number(tr.dataset.row);
     tr.classList.toggle('is-next', i === nextRow);
@@ -376,7 +393,22 @@ function renderTable() {
       const del = el('button', { type: 'button', className: 'icon-btn', title: 'この行を削除', textContent: '×' });
       del.dataset.del = i;
       del.setAttribute('aria-label', `#${i + 1} を削除`);
-      return el('tr', { dataset: { row: i } }, el('td', { className: 'num' }, `#${i + 1}`), ...cells, el('td', {}, del));
+      const handle = el('button', {
+        type: 'button',
+        className: 'handle',
+        title: 'ドラッグして並べ替え（↑↓ キーでも移動できます）',
+        textContent: '⠿',
+      });
+      handle.dataset.handle = i;
+      handle.setAttribute('aria-label', `#${i + 1} を移動（↑↓ キー）`);
+      return el(
+        'tr',
+        { dataset: { row: i } },
+        el('td', { className: 'handle-cell' }, handle),
+        el('td', { className: 'num' }, `#${i + 1}`),
+        ...cells,
+        el('td', {}, del),
+      );
     }),
   );
 }
@@ -402,6 +434,85 @@ $('rules-body').addEventListener('click', (e) => {
   def.rules.splice(Number(btn.dataset.del), 1);
   renderTable();
   onRulesChanged();
+});
+
+// ---------- 行の並べ替え（ドラッグ＆ドロップ／↑↓ キー） ----------
+/** from 行を、挿入位置 to（0〜行数）へ移す */
+function moveRule(from, to) {
+  const dest = to > from ? to - 1 : to;
+  if (dest === from || dest < 0 || dest >= def.rules.length) return false;
+  const [rule] = def.rules.splice(from, 1);
+  def.rules.splice(dest, 0, rule);
+  renderTable();
+  onRulesChanged();
+  return dest;
+}
+
+let rowDrag = null;
+
+function clearDropMarks() {
+  document.querySelectorAll('#rules-body .drop-above, #rules-body .drop-below').forEach((tr) => tr.classList.remove('drop-above', 'drop-below'));
+}
+
+$('rules-body').addEventListener('pointerdown', (e) => {
+  // ⠿ ボタンだけでなく、そのセル全体をつかめるようにする
+  const handle = e.target.closest('.handle-cell')?.querySelector('[data-handle]');
+  if (!handle || e.button !== 0) return;
+  e.preventDefault();
+  window.getSelection()?.removeAllRanges();
+  try {
+    handle.setPointerCapture(e.pointerId);
+  } catch {
+    // キャプチャできなくても window で追跡するので問題ない
+  }
+  const from = Number(handle.dataset.handle);
+  rowDrag = { from, to: from, id: e.pointerId, handle };
+  handle.closest('tr').classList.add('dragging');
+  document.body.classList.add('row-dragging');
+});
+
+/** ポインターの高さから挿入位置（0〜行数）を求める */
+function dropIndex(clientY) {
+  const trs = [...$('rules-body').rows];
+  for (let i = 0; i < trs.length; i++) {
+    const r = trs[i].getBoundingClientRect();
+    if (clientY < r.top + r.height / 2) return i;
+  }
+  return trs.length;
+}
+
+window.addEventListener('pointermove', (e) => {
+  if (!rowDrag || e.pointerId !== rowDrag.id) return;
+  e.preventDefault();
+  const trs = [...$('rules-body').rows];
+  const to = dropIndex(e.clientY);
+  rowDrag.to = to;
+  clearDropMarks();
+  if (to === rowDrag.from || to === rowDrag.from + 1) return;
+  if (to < trs.length) trs[to].classList.add('drop-above');
+  else trs[trs.length - 1].classList.add('drop-below');
+});
+
+function endRowDrag(e) {
+  if (!rowDrag || e.pointerId !== rowDrag.id) return;
+  const { from } = rowDrag;
+  const to = dropIndex(e.clientY);
+  rowDrag = null;
+  clearDropMarks();
+  document.body.classList.remove('row-dragging');
+  document.querySelector('#rules-body tr.dragging')?.classList.remove('dragging');
+  if (e.type === 'pointerup') moveRule(from, to);
+}
+window.addEventListener('pointerup', endRowDrag);
+window.addEventListener('pointercancel', endRowDrag);
+
+$('rules-body').addEventListener('keydown', (e) => {
+  const handle = e.target.closest('[data-handle]');
+  if (!handle || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
+  e.preventDefault();
+  const from = Number(handle.dataset.handle);
+  const dest = moveRule(from, e.key === 'ArrowUp' ? from - 1 : from + 2);
+  if (dest !== false) document.querySelector(`#rules-body [data-handle="${dest}"]`)?.focus();
 });
 
 $('add-rule').addEventListener('click', () => {
@@ -470,7 +581,9 @@ function fromBase64Url(s) {
 
 function encodeDef(d) {
   const head = Number.isInteger(d.head) ? d.head : 0;
-  return toBase64Url(JSON.stringify({ v: 1, blank: d.blank, tape: d.tape, head, start: d.start, halt: d.halt, rules: rulesToRows(d.rules) }));
+  return toBase64Url(
+    JSON.stringify({ v: 1, blank: d.blank, tape: d.tape, head, start: d.start, halt: d.halt, rules: rulesToRows(d.rules), layout: d.layout }),
+  );
 }
 
 function decodeDef(s) {
@@ -483,6 +596,11 @@ function decodeDef(s) {
     start: String(o.start ?? ''),
     halt: Array.isArray(o.halt) ? o.halt.map(String) : [],
     rules: rowsToRules(o.rules.filter(Array.isArray).map((r) => FIELDS.map((_, i) => String(r[i] ?? '')))),
+    layout: Object.fromEntries(
+      Object.entries(o.layout && typeof o.layout === 'object' ? o.layout : {}).filter(
+        ([, v]) => Array.isArray(v) && v.length === 2 && v.every(Number.isFinite),
+      ),
+    ),
   };
 }
 
@@ -508,6 +626,10 @@ $('btn-back').addEventListener('click', () => {
   doStepBack();
 });
 $('btn-reset').addEventListener('click', resetMachine);
+$('diagram-reset').addEventListener('click', () => {
+  def.layout = cloneLayout(baseLayout);
+  uiDirty = true;
+});
 
 const speedInput = $('speed');
 function applySpeed() {

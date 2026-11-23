@@ -30,5 +30,7 @@
 - `js/machine.js` — コアロジック（`compile` で検証・変換、`TuringMachine` で実行・巻き戻し）。DOM に依存させない。
 - `js/presets.js` — 例題。追加したら `tests/machine.test.js` に期待値のテストを足す。
 - `js/render.js` — Canvas 描画（テープとヘッド、時空間図）
-- `js/main.js` — UI 全般（操作、遷移表エディタ、共有リンク `#m=<base64url JSON>`）
+- `js/diagram.js` — 状態遷移図（SVG）。例題の `layout` → 自動配置（開始状態からの距離で列分け）の順に配置する。ドラッグで `def.layout` を書き換える
+- `js/main.js` — UI 全般（操作、遷移表エディタと行の並べ替え、共有リンク `#m=<base64url JSON>`。JSON には `layout` も入る）
+- **キャッシュ対策**: JS / CSS を変更したら、`index.html` と `js/main.js` の import にある `?v=N` を 1 つ上げる（GitHub Pages ではモジュールがキャッシュされ、新旧のファイルが混ざると壊れるため）
 - 画面の文言は日本語。対象は学習・説明用なので、専門用語には説明を添える。

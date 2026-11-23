@@ -64,6 +64,16 @@ const raw = [
     head: 0,
     start: '開始',
     halt: ['受理', '拒否'],
+    layout: {
+      開始: [0, 160],
+      aを覚えた: [230, 40],
+      bを覚えた: [230, 280],
+      a確認: [480, 40],
+      b確認: [480, 280],
+      戻る: [80, 400],
+      受理: [720, 110],
+      拒否: [720, 230],
+    },
     rules: [
       ['開始', 'a', '_', 'R', 'aを覚えた'],
       ['開始', 'b', '_', 'R', 'bを覚えた'],
@@ -130,6 +140,13 @@ const raw = [
     head: 0,
     start: 'A',
     halt: ['H'],
+    layout: {
+      A: [0, 0],
+      B: [260, 0],
+      C: [260, 210],
+      D: [0, 210],
+      H: [500, 210],
+    },
     rules: [
       ['A', '0', '1', 'R', 'B'],
       ['A', '1', '1', 'L', 'B'],
@@ -160,5 +177,11 @@ export function clonePreset(id) {
     start: p.start,
     halt: [...p.halt],
     rules: p.rules.map((r) => ({ ...r })),
+    layout: cloneLayout(p.layout),
   };
+}
+
+/** 状態遷移図の配置 { 状態名: [x, y] } の複製 */
+export function cloneLayout(layout) {
+  return Object.fromEntries(Object.entries(layout ?? {}).map(([k, v]) => [k, [...v]]));
 }

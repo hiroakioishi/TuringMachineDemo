@@ -404,6 +404,152 @@ input[type='number'] {
   height: 320px;
 }
 
+/* ---------- 状態遷移図 ---------- */
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 1.5rem;
+}
+
+.section-head h2 {
+  margin-top: 0;
+}
+
+button.small {
+  padding: 3px 10px;
+  font-size: 0.82rem;
+}
+
+.hl-next {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.hl-last {
+  color: var(--last);
+  font-weight: 700;
+}
+
+.diagram-wrap {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  overflow-x: auto;
+}
+
+#diagram {
+  display: block;
+  width: 100%;
+  min-width: 560px;
+  height: auto;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#diagram .edge {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1.6;
+  opacity: 0.75;
+}
+
+#diagram .edge.next {
+  stroke: var(--accent);
+  stroke-width: 3;
+  opacity: 1;
+}
+
+#diagram .edge.last {
+  stroke: var(--last);
+  stroke-width: 2.6;
+  opacity: 1;
+}
+
+#diagram .arrow-head {
+  fill: var(--muted);
+}
+
+#diagram .arrow-head.next {
+  fill: var(--accent);
+}
+
+#diagram .arrow-head.last {
+  fill: var(--last);
+}
+
+#diagram .arrow-head.start {
+  fill: var(--ink);
+}
+
+#diagram .start-arrow {
+  stroke: var(--ink);
+  stroke-width: 2;
+  fill: none;
+}
+
+#diagram .start-label {
+  font: 600 12px system-ui, sans-serif;
+  fill: var(--ink);
+}
+
+#diagram .elabel {
+  font: 13px ui-monospace, 'Cascadia Mono', Consolas, Menlo, monospace;
+  fill: var(--muted);
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+#diagram .elabel.next {
+  fill: var(--accent);
+  font-weight: 700;
+}
+
+#diagram .elabel.last {
+  fill: var(--last);
+  font-weight: 700;
+}
+
+#diagram .node {
+  cursor: grab;
+  touch-action: none;
+}
+
+#diagram.dragging,
+#diagram.dragging .node {
+  cursor: grabbing;
+}
+
+#diagram .node .body {
+  fill: var(--surface);
+  stroke: var(--c);
+  stroke-width: 2.5;
+  transition: fill 0.15s;
+}
+
+#diagram .node .ring {
+  fill: none;
+  stroke: var(--c);
+  stroke-width: 1.5;
+}
+
+#diagram .node .nlabel {
+  font: 600 14px system-ui, -apple-system, 'Segoe UI', 'Hiragino Sans', 'Yu Gothic UI', sans-serif;
+  fill: var(--ink);
+  pointer-events: none;
+}
+
+#diagram .node.current .body {
+  fill: var(--c);
+}
+
+#diagram .node.current .nlabel {
+  fill: #fff;
+}
+
 /* ---------- エディタ ---------- */
 .settings {
   display: grid;
@@ -500,8 +646,7 @@ table.rules {
 .rules td.num {
   color: var(--muted);
   font-variant-numeric: tabular-nums;
-  padding-left: 8px;
-  border-left: 4px solid transparent;
+  padding-left: 4px;
   white-space: nowrap;
 }
 
@@ -509,7 +654,11 @@ table.rules {
   background: var(--last-soft);
 }
 
-.rules tr.is-last td.num {
+.rules td.handle-cell {
+  border-left: 4px solid transparent;
+}
+
+.rules tr.is-last td.handle-cell {
   border-left-color: var(--last);
 }
 
@@ -517,8 +666,11 @@ table.rules {
   background: var(--accent-soft);
 }
 
-.rules tr.is-next td.num {
+.rules tr.is-next td.handle-cell {
   border-left-color: var(--accent);
+}
+
+.rules tr.is-next td.num {
   color: var(--accent);
   font-weight: 700;
 }
@@ -540,6 +692,50 @@ table.rules {
   min-width: 4.2em;
   padding-left: 4px;
   padding-right: 2px;
+}
+
+.rules td.handle-cell {
+  padding: 0 0 0 4px;
+  width: 1%;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.handle {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  padding: 4px 4px;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.handle:hover:not(:disabled) {
+  color: var(--accent);
+}
+
+body.row-dragging,
+body.row-dragging * {
+  cursor: grabbing !important;
+  user-select: none;
+}
+
+.rules tr.dragging td {
+  opacity: 0.45;
+}
+
+.rules tr.drop-above td {
+  box-shadow: inset 0 3px 0 var(--accent);
+}
+
+.rules tr.drop-below td {
+  box-shadow: inset 0 -3px 0 var(--accent);
 }
 
 .icon-btn {
