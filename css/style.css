@@ -11,7 +11,7 @@
   --last-soft: rgba(230, 140, 40, 0.14);
   --last: #d9822b;
   --danger: #d0353f;
-  --flash: rgba(255, 140, 0, 0.7);
+  --flash: rgba(40, 205, 95, 0.7);
   --tape-well: #dde2ea;
   --tape-bg: #f2ecdb;
   --tape-line: #d6cfbd;
@@ -37,7 +37,7 @@
     --last-soft: rgba(240, 160, 70, 0.16);
     --last: #f0a046;
     --danger: #f0646d;
-    --flash: rgba(255, 140, 0, 0.75);
+    --flash: rgba(70, 230, 120, 0.75);
     --tape-well: #0e1116;
     --tape-bg: #cdc5af;
     --tape-line: #ada38a;
@@ -62,7 +62,7 @@
   --last-soft: rgba(240, 160, 70, 0.16);
   --last: #f0a046;
   --danger: #f0646d;
-  --flash: rgba(255, 140, 0, 0.75);
+  --flash: rgba(70, 230, 120, 0.75);
   --tape-well: #0e1116;
   --tape-bg: #cdc5af;
   --tape-line: #ada38a;
