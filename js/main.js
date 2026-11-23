@@ -1,7 +1,7 @@
-import { TuringMachine, compile, parseList } from './machine.js?v=3';
-import { PRESETS, clonePreset, cloneLayout, rowsToRules, rulesToRows } from './presets.js?v=3';
-import { TapeRenderer, SpacetimeRenderer, makeStateColors, makeSymbolColors, readTheme } from './render.js?v=3';
-import { StateDiagram } from './diagram.js?v=3';
+import { TuringMachine, compile, parseList } from './machine.js?v=4';
+import { PRESETS, clonePreset, cloneLayout, rowsToRules, rulesToRows } from './presets.js?v=4';
+import { TapeRenderer, SpacetimeRenderer, makeStateColors, makeSymbolColors, readTheme } from './render.js?v=4';
+import { StateDiagram } from './diagram.js?v=4';
 
 const $ = (id) => document.getElementById(id);
 const SPEEDS = [0.5, 1, 2, 4, 8, 16, 32, 64, 240];

@@ -38,6 +38,12 @@ export function readTheme() {
     line: g('--line'),
     flash: g('--flash'),
     accent: g('--accent'),
+    tapeWell: g('--tape-well'),
+    tapeBg: g('--tape-bg'),
+    tapeLine: g('--tape-line'),
+    tapeEdge: g('--tape-edge'),
+    tapeInk: g('--tape-ink'),
+    tapeShadow: g('--tape-shadow'),
   };
 }
 
@@ -57,6 +63,13 @@ function fitCanvas(canvas) {
   const ctx = canvas.getContext('2d');
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   return { ctx, w, h };
+}
+
+/** "#rrggbb" を同じ色の完全な透明にする（グラデーションが黒ずまないように） */
+function transparentOf(hex) {
+  const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
+  if (!m) return 'rgba(0,0,0,0)';
+  return `rgba(${parseInt(m[1], 16)}, ${parseInt(m[2], 16)}, ${parseInt(m[3], 16)}, 0)`;
 }
 
 function roundRect(ctx, x, y, w, h, r) {
@@ -111,12 +124,20 @@ export class TapeRenderer {
 
     const first = Math.floor(this.camera - half) - 1;
     const last = Math.ceil(this.camera + half) + 1;
+
+    // テープを「紙の帯」として、影を付けて浮かせる
+    ctx.save();
+    ctx.shadowColor = theme.tapeShadow;
+    ctx.shadowBlur = 14;
+    ctx.shadowOffsetY = 4;
+    ctx.fillStyle = theme.tapeBg;
+    ctx.fillRect(-10, tapeY, w + 20, s);
+    ctx.restore();
+
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     for (let p = first; p <= last; p++) {
       const x = toX(p) - s / 2;
-      ctx.fillStyle = theme.cell;
-      ctx.fillRect(x, tapeY, s, s);
       if (p === tm.head) {
         ctx.fillStyle = colorOf(tm.state, 0.16);
         ctx.fillRect(x, tapeY, s, s);
@@ -127,22 +148,36 @@ export class TapeRenderer {
         ctx.fillRect(x, tapeY, s, s);
         ctx.globalAlpha = 1;
       }
-      ctx.strokeStyle = theme.line;
+      // マス目の仕切り
+      ctx.strokeStyle = theme.tapeLine;
       ctx.lineWidth = 1;
-      ctx.strokeRect(Math.round(x) + 0.5, tapeY + 0.5, s, s);
+      ctx.beginPath();
+      ctx.moveTo(Math.round(x) + 0.5, tapeY + 4);
+      ctx.lineTo(Math.round(x) + 0.5, tapeY + s - 4);
+      ctx.stroke();
 
       const sym = tm.read(p);
       const isBlank = sym === tm.def.blank;
-      ctx.globalAlpha = isBlank ? 0.35 : 1;
-      ctx.fillStyle = isBlank ? theme.muted : theme.ink;
-      ctx.font = `600 ${Math.round(s * 0.46)}px ${MONO}`;
+      ctx.globalAlpha = isBlank ? 0.28 : 1;
+      ctx.fillStyle = theme.tapeInk;
+      ctx.font = `700 ${Math.round(s * 0.48)}px ${MONO}`;
       ctx.fillText(sym, toX(p), tapeY + s / 2 + 1);
       ctx.globalAlpha = 1;
 
       ctx.fillStyle = theme.muted;
       ctx.font = `11px ${FONT}`;
-      ctx.fillText(String(p), toX(p), tapeY + s + 13);
+      ctx.fillText(String(p), toX(p), tapeY + s + 14);
     }
+
+    // テープの上下の縁
+    ctx.strokeStyle = theme.tapeEdge;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, tapeY + 1);
+    ctx.lineTo(w, tapeY + 1);
+    ctx.moveTo(0, tapeY + s - 1);
+    ctx.lineTo(w, tapeY + s - 1);
+    ctx.stroke();
 
     // ヘッド
     const hx = toX(headX);
@@ -197,10 +232,10 @@ export class TapeRenderer {
       [w, w - fade],
     ]) {
       const g = ctx.createLinearGradient(x0, 0, x1, 0);
-      g.addColorStop(0, theme.surface);
-      g.addColorStop(1, 'rgba(0,0,0,0)');
+      g.addColorStop(0, theme.tapeWell);
+      g.addColorStop(1, transparentOf(theme.tapeWell)); // 黒を経由せずに透明へ
       ctx.fillStyle = g;
-      ctx.fillRect(Math.min(x0, x1), tapeY - 1, fade, s + 30);
+      ctx.fillRect(Math.min(x0, x1), tapeY - 22, fade, s + 50);
     }
   }
 }
